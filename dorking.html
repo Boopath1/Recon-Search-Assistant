@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bug Bounty Search Engine</title>
+    <style>
+        :root {
+            --primary-color: #0a192f;
+            --secondary-color: #64ffda;
+            --accent-color: #ff5757;
+            --text-color: #e6f1ff;
+            --background-color: #0a192f;
+            --card-background: rgba(17, 34, 64, 0.8);
+            --button-hover: rgba(100, 255, 218, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            background: var(--background-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: var(--secondary-color);
+            margin: 20px 0;
+            font-size: 2.5em;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .search-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+            padding: 20px;
+            background: var(--card-background);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .domain-input-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+            max-width: 800px;
+        }
+        
+        h2 {
+            color: var(--secondary-color);
+            font-weight: 500;
+            margin: 0;
+            white-space: nowrap;
+        }
+        
+        #target {
+            flex: 1;
+            padding: 12px 15px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-color);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        #target:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 10px rgba(100, 255, 218, 0.2);
+        }
+
+        .reset-button {
+            background: var(--accent-color) !important;
+            padding: 12px 25px !important;
+            white-space: nowrap;
+            border: none !important;
+        }
+
+        .reset-button:hover {
+            background: #ff4242 !important;
+            transform: translateY(-2px);
+        }
+
+        .api-key-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: var(--secondary-color);
+            color: var(--primary-color);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .api-key-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(100, 255, 218, 0.2);
+            background: #50d9c2;
+        }
+        
+        .category-container {
+            background: var(--card-background);
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+        
+        .category-title {
+            color: var(--secondary-color);
+            font-size: 1.4em;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--secondary-color);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        
+        .button-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        
+        .futuristic-button {
+            padding: 12px 20px;
+            font-size: 14px;
+            background: transparent;
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-align: left;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .futuristic-button:hover {
+            background: var(--button-hover);
+            transform: translateY(-2px);
+            border-color: var(--secondary-color);
+        }
+
+        .button-clicked {
+            background: rgba(100, 255, 218, 0.2) !important;
+            border-color: var(--secondary-color) !important;
+            color: var(--secondary-color) !important;
+            box-shadow: 0 0 10px rgba(100, 255, 218, 0.2) !important;
+        }
+
+        /* Status indicator */
+        .api-status {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            z-index: 1000;
+        }
+        
+        .api-status.active {
+            background: rgba(100, 255, 218, 0.2);
+            color: var(--secondary-color);
+            border: 1px solid var(--secondary-color);
+        }
+        
+        .api-status.inactive {
+            background: rgba(255, 87, 87, 0.2);
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+        }
+
+        /* Modal styles update */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1001;
+        }
+
+        .modal-content {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--card-background);
+            padding: 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--secondary-color);
+        }
+
+        .modal h2 {
+            color: var(--secondary-color);
+            margin: 0 0 15px 0;
+            font-size: 1.5em;
+        }
+
+        .modal p {
+            color: var(--text-color);
+            margin: 0 0 20px 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 12px 15px;
+            margin: 10px 0 20px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-color);
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .modal input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 10px rgba(100, 255, 218, 0.2);
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .modal-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .save-button {
+            background: var(--secondary-color);
+            color: var(--primary-color);
+        }
+
+        .save-button:hover {
+            background: #50d9c2;
+            transform: translateY(-2px);
+        }
+
+        .cancel-button {
+            background: transparent;
+            color: var(--text-color);
+            border: 1px solid var(--accent-color);
+        }
+
+        .cancel-button:hover {
+            background: rgba(255, 87, 87, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Results container */
+        .search-results {
+            background: var(--card-background);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(100, 255, 218, 0.2);
+        }
+
+        .result-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .result-title {
+            color: var(--secondary-color);
+            margin: 0 0 8px 0;
+            font-size: 18px;
+        }
+
+        .result-link {
+            color: #8892b0;
+            font-size: 12px;
+            word-break: break-all;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .result-snippet {
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text-color);
+        }
+
+        @media (max-width: 768px) {
+            .search-section {
+                flex-direction: column;
+                padding: 15px;
+            }
+
+            .domain-input-group {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            #target {
+                width: 100%;
+            }
+
+            .reset-button {
+                width: 100%;
+            }
+        }
+    </style>
+    <script>
+        // Keep track of clicked buttons
+        let clickedButtons = {};
+        let cseApiKey = '';
+        let searchEngineId = '';
+        let isApiActive = false;
+        
+        // Load previously clicked buttons and API keys from localStorage
+        function loadSavedData() {
+            // Load clicked buttons
+            const savedButtons = localStorage.getItem('clickedButtons');
+            if (savedButtons) {
+                clickedButtons = JSON.parse(savedButtons);
+                
+                // Apply the clicked class to all previously clicked buttons
+                Object.keys(clickedButtons).forEach(buttonId => {
+                    const button = document.getElementById(buttonId);
+                    if (button) {
+                        button.classList.add('button-clicked');
+                    }
+                });
+            }
+            
+            // Load API keys
+            cseApiKey = localStorage.getItem('cseApiKey') || '';
+            searchEngineId = localStorage.getItem('searchEngineId') || '';
+            
+            // Update API status indicator
+            updateApiStatus();
+        }
+        
+        // Update the API status indicator
+        function updateApiStatus() {
+            const statusElement = document.getElementById('apiStatus');
+            if (cseApiKey && searchEngineId) {
+                statusElement.className = 'api-status active';
+                statusElement.innerText = 'API Active';
+                isApiActive = true;
+            } else {
+                statusElement.className = 'api-status inactive';
+                statusElement.innerText = 'API Inactive';
+                isApiActive = false;
+            }
+        }
+        
+        // Reset all buttons function
+        function resetButtons() {
+            clickedButtons = {};
+            localStorage.removeItem('clickedButtons');
+            
+            // Remove the clicked class from all buttons
+            document.querySelectorAll('.futuristic-button').forEach(button => {
+                button.classList.remove('button-clicked');
+            });
+        }
+        
+        // Test the API connection
+        function testApiConnection() {
+            if (!cseApiKey || !searchEngineId) {
+                alert('Please enter both API Key and Search Engine ID first.');
+                return;
+            }
+            
+            const apiUrl = 'https://customsearch.googleapis.com/customsearch/v1';
+            const params = new URLSearchParams({
+                key: cseApiKey,
+                cx: searchEngineId,
+                q: 'test',
+                num: 1
+            });
+            
+            const url = `${apiUrl}?${params.toString()}`;
+            
+            // Show loading state
+            document.getElementById('testApiButton').innerText = 'Testing...';
+            
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`API request failed: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error.message || 'Unknown API error');
+                    }
+                    alert('API connection successful! Your API key and Search Engine ID are working.');
+                })
+                .catch(error => {
+                    console.error('Error testing API:', error);
+                    alert(`API test failed: ${error.message}. Please check your API Key and Search Engine ID.`);
+                })
+                .finally(() => {
+                    document.getElementById('testApiButton').innerText = 'Test Connection';
+                });
+        }
+        
+        function googleSearch(type) {
+            var targetDomain = document.getElementById('target').value;
+
+            if (!targetDomain) {
+                alert('Please enter a target domain.');
+                return;
+            }
+
+            // Mark button as clicked by adding a class
+            const buttonId = 'button-' + type;
+            document.getElementById(buttonId).classList.add('button-clicked');
+            
+            // Store in clickedButtons object and localStorage for persistence
+            clickedButtons[buttonId] = true;
+            localStorage.setItem('clickedButtons', JSON.stringify(clickedButtons));
+
+            // Handle special cases first (15-37, 70, 78)
+            if ((type >= 15 && type <= 37) || type === 70 || type === 78) {
+                if (handleSpecialSearches(type, targetDomain)) {
+                    return;
+                }
+            }
+
+            // For regular search queries
+            var searchQuery = 'site:' + targetDomain;
+
+            switch (type) {
+                case 1:
+                    searchQuery += ' intitle:index.of';
+                    break;
+                case 2:
+                    searchQuery += ' ext:xml | ext:conf | ext:cnf | ext:reg | ext:inf | ext:rdp | ext:cfg | ext:txt | ext:ora | ext:ini';
+                    break;
+                case 3:
+                    searchQuery += ' ext:sql | ext:dbf | ext:mdb';
+                    break;
+                case 4:
+                    searchQuery += ' ext:log';
+                    break;
+                case 5:
+                    searchQuery += ' ext:bkf | ext:bkp | ext:bak | ext:old | ext:backup';
+                    break;
+                case 6:
+                    searchQuery += ' inurl:login';
+                    break;
+                case 7:
+                    searchQuery += ' intext:"sql syntax near" | intext:"syntax error has occurred" | intext:"incorrect syntax near" | intext:"unexpected end of SQL command" | intext:"Warning: mysql_connect()" | intext:"Warning: mysql_query()" | intext:"Warning: pg_connect()"';
+                    break;
+                case 8:
+                    searchQuery += ' ext:doc | ext:docx | ext:odt | ext:pdf | ext:rtf | ext:sxw | ext:psw | ext:ppt | ext:pptx | ext:pps | ext:csv';
+                    break;
+                case 9:
+                    searchQuery += ' ext:php intitle:phpinfo "published by the PHP Group"';
+                    break;
+                case 10:
+                    searchQuery += ' inurl:wp- | inurl:wp-content | inurl:plugins | inurl:uploads | inurl:themes | inurl:download';
+                    break;
+                case 11:
+                    searchQuery += ' inurl:shell | inurl:backdoor | inurl:wso | inurl:cmd | shadow | passwd | boot.ini | inurl:backdoor';
+                    break;
+                case 12:
+                    searchQuery += ' inurl:readme | inurl:license | inurl:install | inurl:setup | inurl:config';
+                    break;
+                case 13:
+                    searchQuery += ' inurl:redir | inurl:url | inurl:redirect | inurl:return | inurl:src=http | inurl:r=http';
+                    break;
+                case 14:
+                    searchQuery += ' ext:action | ext:struts | ext:do';
+                    break;
+                case 38:
+                    searchQuery += ' inurl:"/geoserver/ows?service=wfs"';
+                    break;
+                case 39:
+                    searchQuery += ' intext:"ArcGIS REST Services Directory" intitle:"Folder: /"';
+                    break;
+                case 40:
+                    searchQuery += ' inurl:/wp-content/uploads/wpo_wcpdf';
+                    break;
+                case 41:
+                    searchQuery += ' intitle:"index of "main.yml"';
+                    break;
+                case 42:
+                    searchQuery += ' inurl:/admin.aspx';
+                    break;
+                case 43:
+                    searchQuery += ' inurl:/wp-content/uploads/wpo_wcpdf';
+                    break;
+                case 44:
+                    searchQuery += ' inurl:uploadimage.php';
+                    break;
+                case 45:
+                    searchQuery += ' inurl:*/wp-content/plugins/contact-form-7/';
+                    break;
+                case 46:
+                    searchQuery += ' intitle:index.of conf.php';
+                    break;
+                case 47:
+                    searchQuery += ' intitle:"Sharing API Info"';
+                    break;
+                case 48:
+                    searchQuery += ' intitle:"Index of" inurl:/backup/ "admin.zip"';
+                    break;
+                case 49:
+                    searchQuery += ' intitle:"index of" github-api';
+                    break;
+                case 50:
+                    searchQuery += ' inurl:wp-content/uploads/wcpa_uploads';
+                    break;
+                case 51:
+                    searchQuery += ' inurl:user intitle:"Drupal" intext:"Log in" -"powered by"';
+                    break;
+                case 52:
+                    searchQuery += ' inurl: /libraries/joomla/database/';
+                    break;
+                case 53:
+                    searchQuery += ' inurl:"php?sql=select" ext:php';
+                    break;
+                case 54:
+                    searchQuery += ' inurl:"wp-content" intitle:"index.of" intext:wp-config.php';
+                    break;
+                case 55:
+                    searchQuery += ' intext:"index of" inurl:json-rpc';
+                    break;
+                case 56:
+                    searchQuery += ' intitle:"index of" "download.php?file="';
+                    break;
+                case 57:
+                    searchQuery += ' intext:"index of" inurl:jwks-rsa';
+                    break;
+                case 58:
+                    searchQuery += ' inurl:"wp-content" intitle:"index.of" intext:backup"';
+                    break;
+                case 59:
+                    searchQuery += ' intitle:index.of conf.mysql';
+                    break;
+                case 60:
+                    searchQuery += ' intitle:"index of" "users.yml" | "admin.yml" | "config.yml"';
+                    break;
+                case 61:
+                    searchQuery += ' intitle:"index of" "docker-compose.yml"';
+                    break;
+                case 62:
+                    searchQuery += ' intext:pom.xml intitle:"index of /"';
+                    break;
+                case 63:
+                    searchQuery += ' intext:"Index of" intext:"/etc"';
+                    break;
+                case 64:
+                    searchQuery += ' "sql" "parent" intitle:index.of -injection';
+                    break;
+                case 65:
+                    searchQuery += ' inurl:graphql | inurl:graphiql';
+                    break;
+                case 66:
+                    searchQuery += ' "api_key" | "api key" | "apikey" | "client_secret" | "api_token"';
+                    break;
+                case 67:
+                    searchQuery += ' intitle:"Index of" ".git"';
+                    break;
+                case 68:
+                    searchQuery += ' intext:"Jenkins" intitle:"Dashboard"';
+                    break;
+                case 69:
+                    searchQuery += ' inurl:app/kibana | inurl:":9200/_cat"';
+                    break;
+                case 71:
+                    searchQuery += ' intitle:"kubernetes dashboard"';
+                    break;
+                case 72:
+                    searchQuery += ' intitle:"Docker API Version" | inurl:"/v1.24"';
+                    break;
+                case 73:
+                    searchQuery += ' inurl:Dashboard.jspa | inurl:SecurityTokensList.jspa';
+                    break;
+                case 74:
+                    searchQuery += ' inurl:actuator/health | inurl:actuator/env | inurl:actuator/beans';
+                    break;
+                case 75:
+                    searchQuery += ' intext:"Prometheus Time Series Collection and Processing Server"';
+                    break;
+                case 76:
+                    searchQuery += ' ext:env | ext:yml | ext:yaml DB_PASSWORD | APP_SECRET | API_TOKEN';
+                    break;
+                case 77:
+                    searchQuery += ' inurl:swagger | inurl:api-docs';
+                    break;
+                case 79:
+                    searchQuery += ' intitle:"MongoDB Status" | intext:"MongoDB Server Information"';
+                    break;
+                case 80:
+                    searchQuery += ' intitle:"Apache Status" | intitle:"Nginx Status" | intitle:"Web Server Status"';
+                    break;
+                case 81:
+                    searchQuery += ' inurl:confluence | inurl:wiki';
+                    break;
+                default:
+                    alert('Invalid option.');
+                    return;
+            }
+
+            performSearch(searchQuery, targetDomain);
+        }
+        
+        // Handle special searches that open direct URLs
+        function handleSpecialSearches(type, targetDomain) {
+            let url;
+            
+            switch(type) {
+                case 15:
+                    var site = 'site:pastebin.com ' + targetDomain;
+                    url = 'https://www.google.com/search?q=' + encodeURIComponent(site);
+                    break;
+                case 16:
+                    var site = 'site:linkedin.com employees ' + targetDomain;
+                    url = 'https://www.google.com/search?q=' + encodeURIComponent(site);
+                    break;
+                case 17:
+                    var site = 'inurl:"/phpinfo.php" | inurl:".htaccess" | inurl:"/.git" ' + targetDomain + ' -github';
+                    url = 'https://www.google.com/search?q=' + encodeURIComponent(site);
+                    break;
+                case 18:
+                    var site = 'site:*.' + targetDomain;
+                    url = 'https://www.google.com/search?q=' + encodeURIComponent(site);
+                    break;
+                case 19:
+                    var site = 'site:*.*.' + targetDomain;
+                    url = 'https://www.google.com/search?q=' + encodeURIComponent(site);
+                    break;
+                case 20:
+                    var site = 'inurl:wp-content | inurl:wp-includes ' + targetDomain;
+                    url = 'https://www.google.com/search?q=' + encodeURIComponent(site);
+                    break;
+                case 21:
+                    var site = '"*.' + targetDomain + '"';
+                    url = 'https://github.com/search?q=' + encodeURIComponent(site) + '&type=host';
+                    break;
+                case 22:
+                    url = 'http://' + targetDomain + '/crossdomain.xml';
+                    break;
+                case 23:
+                    url = 'http://threatcrowd.org/domain.php?domain=' + targetDomain;
+                    break;
+                case 24:
+                    var site = '+inurl:' + targetDomain + ' +ext:swf';
+                    url = 'https://www.google.com/search?q=' + encodeURIComponent(site);
+                    break;
+                case 25:
+                    var site = 'site:' + targetDomain + ' mime:swf';
+                    url = 'https://yandex.com/search/?text=' + encodeURIComponent(site);
+                    break;
+                case 26:
+                    var site = targetDomain;
+                    url = 'https://web.archive.org/cdx/search?url=' + encodeURIComponent(site) + '/&matchType=domain&collapse=urlkey&output=text&fl=original&filter=urlkey:.*swf&limit=100000&_=1507209148310';
+                    break;
+                case 27:
+                    var site = targetDomain;
+                    url = 'https://web.archive.org/cdx/search?url=' + encodeURIComponent(site) + '/&matchType=domain&collapse=urlkey&output=text&fl=original&filter=mimetype:application/x-shockwave-flash&limit=100000&_=1507209148310';
+                    break;
+                case 28:
+                    var site = '.' + targetDomain;
+                    url = 'https://web.archive.org/web/*/(.' + encodeURIComponent(site) + ')';
+                    break;
+                case 29:
+                    var site = targetDomain;
+                    url = 'https://web.archive.org/web/*/' + encodeURIComponent(site) + '/*';
+                    break;
+                case 30:
+                    url = 'https://crt.sh/?q=%25.' + targetDomain;
+                    break;
+                case 31:
+                    url = 'https://www.openbugbounty.org/search/?search=' + encodeURIComponent(targetDomain) + '&type=host';
+                    break;
+                case 32:
+                    url = 'https://www.reddit.com/search/?q=' + encodeURIComponent(targetDomain) + '&source=recent';
+                    break;
+                case 33:
+                    var site = '+inurl:' + targetDomain + ' +ext:wp- | +inurl:' + targetDomain + ' +ext:wp-content';
+                    url = 'http://wwwb-dedup.us.archive.org:8083/cdx/search?url=' + encodeURIComponent(site) + '/&matchType=domain&collapse=digest&output=text&fl=original,timestamp&filter=urlkey:.*wp[-].*&limit=1000000&xx=';
+                    break;
+                case 34:
+                    url = 'https://censys.io/ipv4?q=' + targetDomain;
+                    break;
+                case 35:
+                    url = 'https://censys.io/domain?q=' + targetDomain;
+                    break;
+                case 36:
+                    url = 'https://censys.io/certificates?q=' + targetDomain;
+                    break;
+                case 37:
+                    url = 'https://www.shodan.io/search?query=' + targetDomain;
+                    break;
+                case 70:
+                    var site = 's3.amazonaws.com "' + targetDomain + '"';
+                    url = 'https://www.google.com/search?q=' + encodeURIComponent(site);
+                    break;
+                case 78:
+                    var site = 'firebaseio.com "' + targetDomain + '"';
+                    url = 'https://www.google.com/search?q=' + encodeURIComponent(site);
+                    break;
+                default:
+                    return false; // Return false to indicate this case isn't handled here
+            }
+            
+            window.open(url, '_blank');
+            return true; // Return true to indicate the URL was opened
+        }
+        
+        // In the performSearch function, we need to ensure it properly uses the API:
+        function performSearch(searchQuery, targetDomain) {
+            // Check if both API key and Search Engine ID are provided
+            if (isApiActive) {
+                // Use Google Custom Search API
+                const apiUrl = 'https://customsearch.googleapis.com/customsearch/v1';
+                const params = new URLSearchParams({
+                    key: cseApiKey,
+                    cx: searchEngineId,
+                    q: searchQuery,
+                    num: 10  // Number of results (max 10)
+                });
+
+                const url = `${apiUrl}?${params.toString()}`;
+                
+                console.log("Attempting API search with:", url);
+
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) {
+                            console.error('API request failed with status:', response.status);
+                            throw new Error('API request failed with status: ' + response.status);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.error) {
+                            console.error('API returned error:', data.error);
+                            throw new Error(data.error.message || 'Unknown API error');
+                        }
+                        
+                        console.log("API search successful:", data);
+                        displayApiResults(data, targetDomain, searchQuery);
+                    })
+                    .catch(error => {
+                        console.error('Error with API search:', error);
+                        alert(`API search failed: ${error.message}. Falling back to regular Google search.`);
+                        // Fallback to regular Google search
+                        window.open('https://www.google.com/search?q=' + encodeURIComponent(searchQuery), '_blank');
+                    });
+            } else {
+                // Regular Google search
+                window.open('https://www.google.com/search?q=' + encodeURIComponent(searchQuery), '_blank');
+            }
+        }
+        
+        // Display API results in a formatted page
+        function displayApiResults(data, targetDomain, searchQuery) {
+            const resultsPage = window.open('', '_blank');
+            let resultsHtml = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Search Results - ${targetDomain}</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            margin: 20px;
+                            background: #0a192f;
+                            color: #e6f1ff;
+                        }
+                        .header {
+                            margin-bottom: 20px;
+                        }
+                        .query {
+                            color: #64ffda;
+                            font-weight: bold;
+                        }
+                        .result {
+                            margin-bottom: 20px;
+                            padding: 15px;
+                            border: 1px solid rgba(100, 255, 218, 0.2);
+                            border-radius: 4px;
+                            background: rgba(17, 34, 64, 0.8);
+                        }
+                        .result h3 {
+                            margin: 0 0 10px 0;
+                            color: #64ffda;
+                        }
+                        .result a {
+                            color: #64ffda;
+                            text-decoration: none;
+                        }
+                        .result a:hover {
+                            text-decoration: underline;
+                        }
+                        .result p {
+                            margin: 10px 0;
+                            font-size: 14px;
+                            line-height: 1.5;
+                        }
+                        .meta {
+                            font-size: 12px;
+                            color: #8892b0;
+                        }
+                        .no-results {
+                            padding: 20px;
+                            text-align: center;
+                            font-size: 16px;
+                            background: rgba(17, 34, 64, 0.8);
+                            border-radius: 4px;
+                            border: 1px solid rgba(100, 255, 218, 0.2);
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h2 style="color: #64ffda;">Search Results for: ${targetDomain}</h2>
+                        <p>Query: <span class="query">${searchQuery}</span></p>
+                    </div>
+            `;
+            
+            if (data.items && data.items.length > 0) {
+                resultsHtml += data.items.map(item => `
+                    <div class="result">
+                        <h3><a href="${item.link}" target="_blank">${item.title}</a></h3>
+                        <div class="meta">${item.link}</div>
+                        <p>${item.snippet}</p>
+                    </div>
+                `).join('');
+            } else {
+                resultsHtml += `
+                    <div class="no-results">
+                        <p>No results found for this query.</p>
+                        <p>Try modifying your search or <a href="https://www.google.com/search?q=${encodeURIComponent(searchQuery)}" target="_blank" style="color:#ff5757">search on Google</a> directly.</p>
+                    </div>
+                `;
+            }
+            
+            resultsHtml += `
+                </body>
+                </html>
+            `;
+            
+            resultsPage.document.write(resultsHtml);
+            resultsPage.document.close();
+        }
+        
+        // API Key Modal Functions
+        function showApiKeyModal() {
+            document.getElementById('apiKeyModal').style.display = 'block';
+            document.getElementById('apiKeyInput').value = cseApiKey;
+            document.getElementById('searchEngineIdInput').value = searchEngineId;
+        }
+
+        function hideApiKeyModal() {
+            document.getElementById('apiKeyModal').style.display = 'none';
+        }
+
+        function saveApiKey() {
+            const newApiKey = document.getElementById('apiKeyInput').value.trim();
+            const newSearchEngineId = document.getElementById('searchEngineIdInput').value.trim();
+            
+            // Check if both fields are filled or both are empty
+            if ((newApiKey && newSearchEngineId) || (!newApiKey && !newSearchEngineId)) {
+                cseApiKey = newApiKey;
+                searchEngineId = newSearchEngineId;
+                
+                localStorage.setItem('cseApiKey', cseApiKey);
+                localStorage.setItem('searchEngineId', searchEngineId);
+                
+                updateApiStatus();
+                hideApiKeyModal();
+                alert('Settings saved successfully!');
+            } else {
+                alert('Please enter both API Key and Search Engine ID, or leave both empty to disable the API.');
+            }
+        }
+        
+        // Initialize when the page loads
+        window.onload = function() {
+            loadSavedData();
+        };
+    </script>
+</head>
+<body>
+    <button class="api-key-button" onclick="showApiKeyModal()">CSE API Key</button>
+    <div id="apiStatus" class="api-status inactive">API Inactive</div>
+
+    <!-- API Key Modal -->
+    <div id="apiKeyModal" class="modal">
+        <div class="modal-content">
+            <h2>Configure Google Custom Search</h2>
+            <p>Enter your Google Custom Search API Key and Search Engine ID to avoid rate limiting.</p>
+            <label for="apiKeyInput">API Key:</label>
+            <input type="text" id="apiKeyInput" placeholder="Enter your API Key" />
+            <label for="searchEngineIdInput">Search Engine ID:</label>
+            <input type="text" id="searchEngineIdInput" placeholder="Enter your Search Engine ID" />
+            <div class="modal-buttons">
+                <button id="testApiButton" class="modal-button save-button" onclick="testApiConnection()" style="margin-right: auto;">Test Connection</button>
+                <button class="modal-button cancel-button" onclick="hideApiKeyModal()">Cancel</button>
+                <button class="modal-button save-button" onclick="saveApiKey()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <h1>Search Engine For Bug Bounty Hunters</h1>
+        
+        <div class="search-section">
+            <div class="domain-input-group">
+                <h2>Enter Target Domain:</h2>
+                <input type="text" id="target" placeholder="example.com">
+            </div>
+            <button class="futuristic-button reset-button" onclick="resetButtons()">Reset Tracking</button>
+        </div>
+        
+<!-- File & Directory Discovery -->
+<div class="category-container">
+    <h3 class="category-title">File & Directory Discovery</h3>
+    <div class="button-container">
+        <button id="button-1" class="futuristic-button" onclick="googleSearch(1)">Directory listing vulnerabilities</button>
+        <button id="button-2" class="futuristic-button" onclick="googleSearch(2)">Exposed Configuration files</button>
+        <button id="button-3" class="futuristic-button" onclick="googleSearch(3)">Exposed Database files</button>
+        <button id="button-4" class="futuristic-button" onclick="googleSearch(4)">Exposed log files</button>
+        <button id="button-5" class="futuristic-button" onclick="googleSearch(5)">Backup and old files</button>
+        <button id="button-8" class="futuristic-button" onclick="googleSearch(8)">Publicly exposed documents</button>
+        <button id="button-46" class="futuristic-button" onclick="googleSearch(46)">Configuration PHP files</button>
+        <button id="button-48" class="futuristic-button" onclick="googleSearch(48)">Admin backup archives</button>
+        <button id="button-54" class="futuristic-button" onclick="googleSearch(54)">WordPress config files</button>
+        <button id="button-58" class="futuristic-button" onclick="googleSearch(58)">WordPress backups</button>
+        <button id="button-59" class="futuristic-button" onclick="googleSearch(59)">MySQL config files</button>
+        <button id="button-67" class="futuristic-button" onclick="googleSearch(67)">Exposed .git directories</button>
+    </div>
+</div>
+
+<!-- Web Application Discovery -->
+<div class="category-container">
+    <h3 class="category-title">Web Application Discovery</h3>
+    <div class="button-container">
+        <button id="button-6" class="futuristic-button" onclick="googleSearch(6)">Login pages</button>
+        <button id="button-7" class="futuristic-button" onclick="googleSearch(7)">SQL errors</button>
+        <button id="button-9" class="futuristic-button" onclick="googleSearch(9)">phpinfo()</button>
+        <button id="button-10" class="futuristic-button" onclick="googleSearch(10)">WordPress sites</button>
+        <button id="button-11" class="futuristic-button" onclick="googleSearch(11)">Finding Backdoors</button>
+        <button id="button-12" class="futuristic-button" onclick="googleSearch(12)">Installation & setup files</button>
+        <button id="button-13" class="futuristic-button" onclick="googleSearch(13)">Open Redirects</button>
+        <button id="button-14" class="futuristic-button" onclick="googleSearch(14)">Apache Struts RCE</button>
+        <button id="button-20" class="futuristic-button" onclick="googleSearch(20)">WordPress files</button>
+        <button id="button-42" class="futuristic-button" onclick="googleSearch(42)">Admin portals</button>
+        <button id="button-44" class="futuristic-button" onclick="googleSearch(44)">Upload pages</button>
+        <button id="button-45" class="futuristic-button" onclick="googleSearch(45)">Contact Form 7</button>
+        <button id="button-51" class="futuristic-button" onclick="googleSearch(51)">Drupal logins</button>
+        <button id="button-52" class="futuristic-button" onclick="googleSearch(52)">Joomla database files</button>
+    </div>
+</div>
+
+<!-- Information Gathering -->
+<div class="category-container">
+    <h3 class="category-title">Information Gathering</h3>
+    <div class="button-container">
+        <button id="button-15" class="futuristic-button" onclick="googleSearch(15)">Pastebin entries</button>
+        <button id="button-16" class="futuristic-button" onclick="googleSearch(16)">LinkedIn employees</button>
+        <button id="button-17" class="futuristic-button" onclick="googleSearch(17)">Sensitive files</button>
+        <button id="button-18" class="futuristic-button" onclick="googleSearch(18)">Subdomains</button>
+        <button id="button-19" class="futuristic-button" onclick="googleSearch(19)">Sub-subdomains</button>
+        <button id="button-30" class="futuristic-button" onclick="googleSearch(30)">SSL Certificate info</button>
+        <button id="button-32" class="futuristic-button" onclick="googleSearch(32)">Reddit mentions</button>
+    </div>
+</div>
+
+<!-- Cloud & Infrastructure -->
+<div class="category-container">
+    <h3 class="category-title">Cloud & Infrastructure</h3>
+    <div class="button-container">
+        <button id="button-31" class="futuristic-button" onclick="googleSearch(31)">Open Bug Bounty reports</button>
+        <button id="button-34" class="futuristic-button" onclick="googleSearch(34)">Censys IPv4</button>
+        <button id="button-35" class="futuristic-button" onclick="googleSearch(35)">Censys Domains</button>
+        <button id="button-36" class="futuristic-button" onclick="googleSearch(36)">Censys Certificates</button>
+        <button id="button-37" class="futuristic-button" onclick="googleSearch(37)">Shodan search</button>
+        <button id="button-68" class="futuristic-button" onclick="googleSearch(68)">Jenkins instances</button>
+        <button id="button-69" class="futuristic-button" onclick="googleSearch(69)">Kibana/Elasticsearch</button>
+        <button id="button-70" class="futuristic-button" onclick="googleSearch(70)">AWS S3 Buckets</button>
+        <button id="button-71" class="futuristic-button" onclick="googleSearch(71)">Kubernetes dashboards</button>
+        <button id="button-72" class="futuristic-button" onclick="googleSearch(72)">Docker API</button>
+        <button id="button-78" class="futuristic-button" onclick="googleSearch(78)">Firebase instances</button>
+        <button id="button-79" class="futuristic-button" onclick="googleSearch(79)">MongoDB servers</button>
+        <button id="button-80" class="futuristic-button" onclick="googleSearch(80)">Web server status pages</button>
+    </div>
+</div>
+
+<!-- API & Development -->
+<div class="category-container">
+    <h3 class="category-title">API & Development</h3>
+    <div class="button-container">
+        <button id="button-21" class="futuristic-button" onclick="googleSearch(21)">GitHub dorks</button>
+        <button id="button-24" class="futuristic-button" onclick="googleSearch(24)">Flash files (Google)</button>
+        <button id="button-25" class="futuristic-button" onclick="googleSearch(25)">Flash files (Yandex)</button>
+        <button id="button-38" class="futuristic-button" onclick="googleSearch(38)">GeoServer WFS</button>
+        <button id="button-39" class="futuristic-button" onclick="googleSearch(39)">ArcGIS directories</button>
+        <button id="button-41" class="futuristic-button" onclick="googleSearch(41)">Ansible YAML files</button>
+        <button id="button-47" class="futuristic-button" onclick="googleSearch(47)">API Info pages</button>
+        <button id="button-49" class="futuristic-button" onclick="googleSearch(49)">GitHub API directories</button>
+        <button id="button-53" class="futuristic-button" onclick="googleSearch(53)">SQL query in URL</button>
+        <button id="button-55" class="futuristic-button" onclick="googleSearch(55)">JSON-RPC endpoints</button>
+        <button id="button-57" class="futuristic-button" onclick="googleSearch(57)">JWKS-RSA endpoints</button>
+        <button id="button-60" class="futuristic-button" onclick="googleSearch(60)">YAML config files</button>
+        <button id="button-61" class="futuristic-button" onclick="googleSearch(61)">Docker compose files</button>
+        <button id="button-62" class="futuristic-button" onclick="googleSearch(62)">Maven POM files</button>
+        <button id="button-65" class="futuristic-button" onclick="googleSearch(65)">GraphQL endpoints</button>
+        <button id="button-66" class="futuristic-button" onclick="googleSearch(66)">API keys & secrets</button>
+        <button id="button-73" class="futuristic-button" onclick="googleSearch(73)">JIRA dashboards</button>
+        <button id="button-74" class="futuristic-button" onclick="googleSearch(74)">Spring actuator endpoints</button>
+        <button id="button-75" class="futuristic-button" onclick="googleSearch(75)">Prometheus servers</button>
+        <button id="button-76" class="futuristic-button" onclick="googleSearch(76)">Environment files with secrets</button>
+        <button id="button-77" class="futuristic-button" onclick="googleSearch(77)">API docs & Swagger</button>
+        <button id="button-81" class="futuristic-button" onclick="googleSearch(81)">Confluence & Wiki pages</button>
+    </div>
+</div>
+
+<!-- Archives & Historical -->
+<div class="category-container">
+    <h3 class="category-title">Archives & Historical</h3>
+    <div class="button-container">
+        <button id="button-22" class="futuristic-button" onclick="googleSearch(22)">Crossdomain.xml</button>
+        <button id="button-23" class="futuristic-button" onclick="googleSearch(23)">ThreatCrowd</button>
+        <button id="button-26" class="futuristic-button" onclick="googleSearch(26)">Archive.org SWF files</button>
+        <button id="button-27" class="futuristic-button" onclick="googleSearch(27)">Archive.org Flash files</button>
+        <button id="button-28" class="futuristic-button" onclick="googleSearch(28)">Archive.org domain history</button>
+        <button id="button-29" class="futuristic-button" onclick="googleSearch(29)">Archive.org full site</button>
+        <button id="button-33" class="futuristic-button" onclick="googleSearch(33)">Archive.org WordPress files</button>
+        <button id="button-56" class="futuristic-button" onclick="googleSearch(56)">Direct file downloads</button>
+        <button id="button-63" class="futuristic-button" onclick="googleSearch(63)">Exposed /etc directories</button>
+        <button id="button-64" class="futuristic-button" onclick="googleSearch(64)">SQL directories</button>
+    </div>
+</div>
+
+    </div>
+
+        <!-- Footer Section -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p>Created by Boopathi S</p>
+                <a href="https://www.linkedin.com/in/boopathi-s/" target="_blank" class="linkedin-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="linkedin-icon">
+                        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                        <rect x="2" y="9" width="4" height="12"></rect>
+                        <circle cx="4" cy="4" r="2"></circle>
+                    </svg>
+                    <span>Connect on LinkedIn</span>
+                </a>
+            </div>
+        </footer>
+
+        <style>
+        /* Footer styles */
+        .footer {
+            margin-top: 50px;
+            padding: 20px;
+            background: var(--card-background);
+            border-top: 1px solid rgba(100, 255, 218, 0.2);
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .footer p {
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .linkedin-button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid var(--secondary-color);
+            border-radius: 4px;
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .linkedin-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(100, 255, 218, 0.1);
+            transition: all 0.4s ease;
+            z-index: -1;
+        }
+
+        .linkedin-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .linkedin-button:hover::before {
+            left: 0;
+        }
+
+        .linkedin-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .linkedin-button:hover .linkedin-icon {
+            transform: rotate(360deg);
+        }
+
+        @media (max-width: 768px) {
+            .footer-content {
+                flex-direction: column;
+            }
+        }
+        </style>
+    
+</body>
+</html>
