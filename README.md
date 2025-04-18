@@ -2,7 +2,7 @@
 
 A powerful and intuitive web-based search engine designed specifically for bug bounty hunters and security researchers. This tool provides quick access to various Google dorks and specialized searches to help identify potential security vulnerabilities and gather information about target domains.
 
-![Screenshot](screenshot.png)
+![image](https://github.com/user-attachments/assets/b755853b-434e-4a54-b3a1-e705b72712c2)
 
 ## Features
 
@@ -28,13 +28,7 @@ A powerful and intuitive web-based search engine designed specifically for bug b
 
 ## Setup Instructions
 
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/yourusername/bug-bounty-search-engine.git
-   cd bug-bounty-search-engine
-   ```
-
-2. **Google Custom Search API Setup** (Optional):
+**Google Custom Search API Setup** (Optional):
    - Create a project in the [Google Cloud Console](https://console.cloud.google.com/)
    - Enable the Custom Search API
    - Create API credentials
@@ -108,15 +102,6 @@ To use the Google Custom Search API:
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Author
-
-- **Boopathi S**
-  - LinkedIn: [Boopathi S](https://www.linkedin.com/in/boopathi-s/)
 
 ## Acknowledgments
 
